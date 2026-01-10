@@ -1,0 +1,66 @@
+---
+title: 'Comparative Analysis of Matching Algorithms in a Self-Improving Loop'
+date: '2025-11-27'
+description: 'The article examines an approach to building an autonomous recruitment system capable of continuous self-learning without human annotation. An architecture is proposed where various ranking algorithms (Vector Search based on fine-tuned embeddings, MLP, Batch Neural Networks) compete to maximize quality metrics. A Large Language Model (LLM) is used as the "Ground Truth" benchmark and generator of training pairs, evaluating the semantic fit of "specialist-vacancy" pairs. The results of a comparative analysis of the correlation between algorithm predictions and LLM evaluations are presented, demonstrating the superiority of fine-tuned embeddings over complex neural network classifiers in limited sample conditions.'
+tags: ['AI', 'HR', 'LLM', 'AutoML']
+authors: ['slavb18']
+language: 'en'
+---
+
+In the HR-Tech sector, the problem of automatically matching CVs (Resumes) and Job Descriptions (JDs) remains a key challenge. Traditional recommender systems require vast amounts of behavioral data (clicks, invitations, hires), which accumulate slowly in HR. Furthermore, the quality of this data often suffers from recruiter subjectivity.
+
+We propose a **"Self-Improving Matching Loop"** approach—a closed loop where:
+
+1. The system generates candidate pairs.
+2. An LLM acts as the "Ideal Recruiter," labeling the data.
+3. Algorithms train on this data and compete against each other.
+4. The best algorithm is automatically deployed to production.
+
+The goal of this work is to analyze the effectiveness of various architectures (Vector Search vs. MLP vs. Batch) within this loop and determine the optimal strategy for filtering out irrelevant candidates.
+
+## Competing Architectures
+
+Three approaches to similarity assessment participated in the experiment:
+
+1. **MatchedCosine (Fine-tuned Embeddings):** Uses cosine similarity between text vectors obtained via a language model fine-tuned on domain data.
+2. **MatchedMlp (Multi-Layer Perceptron):** A fully connected neural network that takes concatenated feature pairs as input and predicts the probability of a match.
+3. **MatchedBatch:** Batch matching via a neural network, optimizing the loss function for a group of candidates simultaneously.
+
+## LLM as Arbiter (Ground Truth)
+
+Instead of manual labeling, we used a relevance score (matched) obtained from an LLM (Gemini). The model analyzed the text of the vacancy and the specialist's profile, providing a relevance score from 0 to 1. This allowed us to quickly obtain a dense matrix of scores for N=2867 pairs, ensuring high speed for R&D iterations.
+
+## Experiment Results
+
+A Spearman correlation analysis was conducted between the algorithms' predictions and the benchmark evaluation (matched).
+
+The results showed a significant gap in the quality of the algorithms' performance:
+
+| Algorithm | Spearman Correlation | Sample Size (n) | Interpretation |
+| --- | --- | --- | --- |
+| **MatchedCosine** | **0.4392** | 2867 | **Moderate correlation.** Best result. |
+| MatchedBatch | 0.1928 | 1749 | Weak correlation. High noise level. |
+| MatchedMlp | 0.1180 | 2867 | No correlation. Random noise level. |
+
+**Observation:**
+Vector search (MatchedCosine) proved to be the only method demonstrating a statistically significant relationship with the target metric. The MatchedMlp and MatchedBatch methods showed low generalization capability during this training iteration.
+
+## Self-Learning Architecture
+
+The obtained results confirm the hypothesis that **fine-tuned embeddings** are the most robust solution for a system "Cold Start."
+
+However, the value of the system lies not in the victory of a single algorithm, but in the **automatic identification of the winner**. The developed pipeline operates on the principle of evolutionary selection:
+
+1. **Generation:** The system continuously creates new versions of algorithms.
+2. **Validation:** The LLM automatically evaluates their quality on a holdout set (as shown in the experiment).
+3. **Rotation:** If MatchedMlp_v2 shows a correlation of 0.5 against Cosine's 0.44, traffic automatically switches to it.
+
+The current failure of MLP and Batch in the experiment is not an architectural failure, but a signal to the automatic pipeline regarding the need to adjust training hyperparameters (e.g., changing the loss function or adding negative mining) without engineer intervention.
+
+We have demonstrated a working prototype of a self-learning matching system. At the current stage of system development:
+
+1. **MatchedCosine is recommended** as the primary ranking algorithm.
+2. **A cutoff threshold has been established**, ensuring an optimal Precision/Recall balance.
+3. **MatchedBatch and MatchedMlp have been excluded** from the decision-making loop until they are retrained, as they introduce noise.
+
+Further development of the system involves using the obtained "clean" data (filtered through Cosine and validated by the LLM) for the retraining (distillation) of more complex MLP models, closing the quality improvement loop.

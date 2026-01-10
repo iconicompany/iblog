@@ -1,0 +1,59 @@
+---
+title: 'A New Player in the Arena: Comparing MCP, A2A, and AGNTCY in the AI Agent Ecosystem'
+date: '2025-10-19'
+description: 'Comparing protocols and infrastructure for AI agents.'
+tags: ['AI', 'Agents', 'MCP', 'A2A', 'AGNTCY']
+authors: ['slavb18']
+language: 'en'
+---
+
+If you follow the world of artificial intelligence, you already know that it is rapidly evolving from monolithic models to interconnected systems of specialized agents. However, realizing this potential runs into a fundamental problem: how to get these agents (often created by different vendors on different frameworks) to communicate, collaborate, and access data securely and efficiently.
+
+This is where three key projects come into play: the Model Context Protocol (MCP) from Anthropic, Agent2Agent (A2A) from Google, and the AGNTCY infrastructure suite. Let's figure out who is who and how they relate to each other.
+
+## Model Context Protocol (MCP): Universal Adapter for Tools and Data
+
+**Main Goal:** Solve the "MxN integrations" problem - the complexity of connecting M AI models to N tools. MCP acts as a "USB-C for AI", providing a unified standard for connecting models and applications to external tools, data, and systems.
+
+### How it works?
+MCP uses a client-host-server architecture.
+
+- **Servers** are independent processes that provide specific capabilities: Tools (executable functions), Resources (read-only data streams), and Prompts (instruction templates).
+- **The Host** (e.g., Claude Desktop) manages the process, creates clients to connect to servers, and ensures security by requesting user consent.
+
+**Key Focus:** Security and control on the host side. Data often remains local, and the user explicitly authorizes every tool call or resource access.
+
+## Agent2Agent (A2A): Direct Communication Protocol Between Agents
+
+**Main Goal:** Become the standard "language" for direct interaction between autonomous AI agents. A2A is essentially "HTTP for agents", allowing them to discover each other and jointly perform tasks.
+
+### How it works?
+A2A is built on familiar web standards: JSON-RPC 2.0 over HTTP(S) and Server-Sent Events (SSE) for streaming.
+
+- **Agent Card** is a JSON file with metadata that describes the agent's capabilities and how to access it (similar to robots.txt for agents).
+- **Tasks** are the central unit of work. They go through a clear lifecycle: sent -> in progress -> input required -> completed.
+- **Messages** consist of "Parts", allowing agents to exchange text, files, and structured data within a single task.
+
+**Key Focus:** Pragmatism and compatibility. A2A does not dictate how an agent should work internally, but standardizes only its "interface" to the outside world.
+
+## AGNTCY: Infrastructure for the "Internet of Agents"
+
+**Main Goal:** Create not just a protocol, but an entire ecosystem for a scalable, secure "Internet of Agents". This is the most ambitious vision of the three.
+
+### How it works?
+AGNTCY is a set of interconnected standards and components:
+
+- **Agent Connection Protocol (ACP):** Defines a standard interface for calling and managing agents (like REST for agents).
+- **Agent Gateway Protocol (AGP):** Provides secure and efficient transport for communication based on gRPC, supporting complex messaging patterns.
+- **Open Agent Schema Framework (OASF):** A standardized format for describing agents, their capabilities, and dependencies.
+- **Agent Directory:** A service for discovering agents, similar to DNS for the Internet.
+
+**Key Focus:** Scalability and security at the infrastructure level. AGNTCY is conceived as a full stack for building complex, multi-user systems of interacting agents.
+
+## Conclusion: Which is for what?
+
+- Use **MCP** when you need to reliably and securely "teach" your AI assistant or application to work with databases, APIs, and external tools.
+- Choose **A2A** when you are creating multiple autonomous agents with different specializations and want them to be able to easily "talk" to each other to solve a common task.
+- Look towards **AGNTCY** when your goal is to build a complex, scalable platform with many agents, where security, service discovery, and lifecycle management are critical.
+
+These technologies do not always exclude each other. It is quite possible that in the future we will see systems where MCP servers provide agents with data, agents communicate via A2A, and this entire ecosystem runs on infrastructure provided by AGNTCY. The future belongs to interoperability, and these protocols are paving the way for it.
