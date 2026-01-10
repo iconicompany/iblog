@@ -1,0 +1,91 @@
+name: Trigger Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'content/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install LLM
+        run: pip install llm
+
+      - name: Configure LLM
+        run: |
+          mkdir -p ~/.config/io.datasette.llm
+          cat <<EOF > ~/.config/io.datasette.llm/extra-openai-models.yaml
+          - model_id: gemini
+            model_name: gemini-2.5-flash-lite
+            api_base: "${{ vars.OPENAI_API_BASE }}"
+            api_key_name: gemini
+          EOF
+          
+          cat <<EOF > ~/.config/io.datasette.llm/keys.json
+          {
+            "// Note": "This file stores secret API credentials. Do not share!",
+            "gemini": "${{ secrets.OPENAI_API_KEY }}"
+          }
+          EOF
+
+      - name: Translate Changed Russian Files
+        run: |
+          # Get list of changed files in content/ru
+          # When triggered by push, github.event.before is the previous commit.
+          # If it's the first push of a branch, github.event.before might be zeros.
+          BEFORE_SHA=${{ github.event.before }}
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BEFORE_SHA="HEAD~1"
+          fi
+          
+          CHANGED_FILES=$(git diff --name-only $BEFORE_SHA ${{ github.sha }} | grep '^content/ru/' || true)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changes in content/ru/ found."
+            exit 0
+          fi
+
+          for FILE in $CHANGED_FILES; do
+            if [ -f "$FILE" ]; then
+              EN_FILE=${FILE/content\/ru\//content\/en\/}
+              EN_DIR=$(dirname "$EN_FILE")
+              mkdir -p "$EN_DIR"
+              
+              echo "Translating $FILE to $EN_FILE..."
+              
+              PROMPT="Translate the following markdown file from Russian to English. Maintain all markdown formatting, frontmatter, and technical terms. Provide the translation in a markdown code block."
+              
+              llm -m gemini --system "$PROMPT" -f "$FILE" -x > "$EN_FILE"
+            fi
+          done
+
+      - name: Commit and Push Translations
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add content/en/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "docs: auto-translate updated content to English" && git push)
+
+      - name: Trigger Landing Page Sync
+        run: |
+          curl --fail --show-error -X POST https://iconicompany.com/nextapi/sync \
+            -H "Authorization: Bearer ${{ secrets.SYNC_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"url\": \"https://api.github.com/repos/${{ github.repository }}/contents/content/{lang}/blog?ref=${{ github.ref_name }}\"}"
+
