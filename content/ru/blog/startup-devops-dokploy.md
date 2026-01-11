@@ -4,7 +4,6 @@ date: '2026-01-11'
 description: 'Как получить удобство Vercel без vendor lock-in: self-hosted PaaS, VPS и простой CI/CD для MVP'
 tags: ['DevOps', 'MVP', 'Self-hosted', 'Deployment', 'Dokploy']
 authors: ['slavb18']
-language: 'ru'
 ---
 
 **DevOps для стартапов: уходим от Vercel, но не усложняем жизнь 🛠**
