@@ -14,6 +14,7 @@ jobs:
       contents: write
 
     steps:
+      - uses: oven-sh/setup-bun@v2
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -76,7 +77,6 @@ jobs:
           done
 
       - name: Commit and Push Translations and Database
-        uses: oven-sh/setup-bun@v2
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
