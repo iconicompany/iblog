@@ -67,14 +67,14 @@ class BlogDatabase {
     query.run({
       $slug: post.slug,
       $lang: post.lang,
-      $title: post.title,
-      $description: post.description,
-      $date: post.date,
+      $title: post.title || "",
+      $description: post.description || "",
+      $date: post.date instanceof Date ? post.date.toISOString() : (post.date || new Date().toISOString()),
       $published: post.published ? 1 : 0,
       $tags: JSON.stringify(post.tags || []),
       $authors: JSON.stringify(post.authors || ['default']),
       $image: post.image || "",
-      $body: post.body,
+      $body: post.body || "",
       $lastSyncedAt: Date.now()
     });
 
